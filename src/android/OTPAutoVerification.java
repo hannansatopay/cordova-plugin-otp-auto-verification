@@ -102,7 +102,7 @@ public class OTPAutoVerification extends CordovaPlugin {
     private void startSMSListener() {
         // Get an instance of SmsRetrieverClient, used to start listening for a matching
         // SMS message.
-        SmsRetrieverClient client = SmsRetriever.getClient(mContext);
+        SmsRetrieverClient client = SmsRetriever.getClient(mContext).startSmsUserConsent(null);
 
         // Starts SmsRetriever, which waits for ONE matching SMS message until timeout
         // (5 minutes). The matching SMS message will be sent via a Broadcast Intent with
@@ -162,20 +162,15 @@ public class OTPAutoVerification extends CordovaPlugin {
                 switch(status.getStatusCode()) {
                     case CommonStatusCodes.SUCCESS:
                         // Get SMS message contents
-                        String message = (String) extras.get(SmsRetriever.EXTRA_SMS_MESSAGE);
-                        // Extract one-time code from the message and complete verification
-                        // by sending the code back to your server.
-
-                        if(mListener!=null){
-                            Pattern pattern = Pattern.compile("(\\d{"+OTP_LENGTH+"})");
-                            Matcher matcher = pattern.matcher(message);
-                            String otp = "";
-                            if (matcher.find()) {
-                                otp = matcher.group(1);  // x digit number
-                            }
-                            mListener.onOTPReceived(otp);
-                        }
-                        break;
+                        Intent consentIntent = extras.get(SmsRetriever.EXTRA_CONSENT_INTENT);
+                        try {
+                        // Start activity to show consent dialog to user, activity must be started in
+                        // 5 minutes, otherwise you'll receive another TIMEOUT intent
+                        startActivityForResult(consentIntent, SMS_CONSENT_REQUEST);
+                    } catch (ActivityNotFoundException e) {
+                        // Handle the exception ...
+                    }
+                    break;
                     case CommonStatusCodes.TIMEOUT:
                         // Waiting for SMS timed out (5 minutes)
                         // Handle the error ...
@@ -185,6 +180,29 @@ public class OTPAutoVerification extends CordovaPlugin {
                 }
             }
         }
+        
+        
+        @Override
+public void onActivityResult(int requestCode, int resultCode, Intent data) {
+    super.onActivityResult(requestCode, resultCode, data);
+    switch (requestCode) {
+        // ...
+        case SMS_CONSENT_REQUEST:
+            if (resultCode == RESULT_OK) {
+                // Get SMS message content
+                String message = data.getStringExtra(SmsRetriever.EXTRA_SMS_MESSAGE);
+                // Extract one-time code from the message and complete verification
+                // `sms` contains the entire text of the SMS message, so you will need
+                // to parse the string.
+                String oneTimeCode = message; // define this function
+
+                mListener.onOTPReceived(oneTimeCode);
+            } else {
+                // Consent canceled, handle the error ...
+            }
+            break;
+    }
+}
 
         public static void bindListener(OTPAutoVerification.Common.OTPListener listener) {
             mListener = listener;
