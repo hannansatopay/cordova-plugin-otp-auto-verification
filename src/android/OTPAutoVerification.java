@@ -102,12 +102,11 @@ public class OTPAutoVerification extends CordovaPlugin {
     private void startSMSListener() {
         // Get an instance of SmsRetrieverClient, used to start listening for a matching
         // SMS message.
-        SmsRetrieverClient client = SmsRetriever.getClient(mContext).startSmsUserConsent(null);
 
         // Starts SmsRetriever, which waits for ONE matching SMS message until timeout
         // (5 minutes). The matching SMS message will be sent via a Broadcast Intent with
         // action SmsRetriever#SMS_RETRIEVED_ACTION.
-        Task<Void> task = client.startSmsRetriever();
+        val task = SmsRetriever.getClient(mContext).startSmsUserConsent(null);
 
         // Listen for success/failure of the start Task. If in a background thread, this
         // can be made blocking using Tasks.await(task, [timeout]);
