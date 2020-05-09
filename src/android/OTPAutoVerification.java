@@ -106,7 +106,7 @@ public class OTPAutoVerification extends CordovaPlugin {
         // Starts SmsRetriever, which waits for ONE matching SMS message until timeout
         // (5 minutes). The matching SMS message will be sent via a Broadcast Intent with
         // action SmsRetriever#SMS_RETRIEVED_ACTION.
-        val task = SmsRetriever.getClient(mContext).startSmsUserConsent(null);
+        Task<Void> task = SmsRetriever.getClient(mContext).startSmsUserConsent(null);
 
         // Listen for success/failure of the start Task. If in a background thread, this
         // can be made blocking using Tasks.await(task, [timeout]);
@@ -161,7 +161,7 @@ public class OTPAutoVerification extends CordovaPlugin {
                 switch(status.getStatusCode()) {
                     case CommonStatusCodes.SUCCESS:
                         // Get SMS message contents
-                        Intent consentIntent = extras.get(SmsRetriever.EXTRA_CONSENT_INTENT);
+                        Intent consentIntent = extras.getParcelable(SmsRetriever.EXTRA_CONSENT_INTENT);
                         try {
                         // Start activity to show consent dialog to user, activity must be started in
                         // 5 minutes, otherwise you'll receive another TIMEOUT intent
